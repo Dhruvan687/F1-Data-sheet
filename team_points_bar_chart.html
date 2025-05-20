@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 Team Points Bar Chart</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        /* Dark Theme Styling */
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #1c1c1c;
+            color: white;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        svg {
+            font-size: 12px;
+        }
+
+        .axis text {
+            fill: #ddd;
+        }
+
+        .bar {
+            fill: #0daa90;
+            transition: fill 0.3s ease;
+        }
+
+        .bar:hover {
+            fill: orange;
+        }
+
+        .label {
+            fill: white;
+            font-weight: bold;
+            text-anchor: middle;
+        }
+
+        .grid line {
+            stroke: #444;
+            stroke-opacity: 0.7;
+        }
+
+        .grid path {
+            stroke: none;
+        }
+
+        #legend {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #ddd;
+        }
+
+        .legend-box {
+            display: inline-block;
+            margin: 0 10px;
+        }
+
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            pointer-events: none;
+            display: none;
+        }
+
+        .graph-info {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 1rem;
+            color: #ddd;
+            background-color: #333;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0px 4px 15px rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <h2>F1 2023: Total Points by Team</h2>
+    <div id="chart"></div>
+    <div id="legend">
+        <div class="legend-box">
+            <span class="legend-color" style="background-color: #0daa90;"></span> Points by Team
+        </div>
+        <div class="legend-box">
+            <span class="legend-color" style="background-color: orange;"></span> Hover Highlight
+        </div>
+    </div>
+    <div id="tooltip" class="tooltip"></div>
+    <div class="graph-info">
+        <p>
+            This bar chart visualizes the total points scored by each team during the 2023 Formula 1 season.
+            Hover over a bar to view detailed information about the points scored by individual drivers in each team.
+        </p>
+        <p>
+            Use this chart to analyze team performances and identify which teams and drivers contributed the most
+            to their respective standings.
+        </p>
+    </div>
+    <script>
+        d3.csv("../data/Formula1_2023season_raceResults.csv").then(rawData => {
+            // Group data by team and driver
+            const teamPoints = d3.groups(rawData, d => d.Team).map(([team, drivers]) => {
+                const totalPoints = d3.sum(drivers, d => +d.Points);
+                const driverPoints = d3.rollups(
+                    drivers,
+                    v => d3.sum(v, d => +d.Points),
+                    d => d.Driver
+                ).map(([driver, points]) => ({ driver, points }));
+                return { team, totalPoints, driverPoints };
+            });
+
+            // Set chart dimensions
+            const margin = { top: 40, right: 20, bottom: 70, left: 100 };
+            const width = 800 - margin.left - margin.right;
+            const height = 700 - margin.top - margin.bottom;
+
+            // Create SVG container
+            const svg = d3.select("#chart")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            // X scale
+            const x = d3.scaleBand()
+                .domain(teamPoints.map(d => d.team))
+                .range([0, width])
+                .padding(0.2);
+
+            // Y scale
+            const y = d3.scaleLinear()
+                .domain([0, d3.max(teamPoints, d => d.totalPoints)])
+                .nice()
+                .range([height, 0]);
+
+            // Add X axis
+            svg.append("g")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(x))
+                .selectAll("text")
+                .attr("transform", "rotate(-45)")
+                .style("text-anchor", "end")
+                .style("fill", "#ddd");
+
+            // Add Y axis
+            svg.append("g")
+                .call(d3.axisLeft(y))
+                .selectAll("text")
+                .style("fill", "#ddd");
+
+            // Add gridlines
+            svg.append("g")
+                .attr("class", "grid")
+                .call(d3.axisLeft(y)
+                    .tickSize(-width)
+                    .tickFormat("")
+                );
+
+            // Tooltip
+            const tooltip = d3.select("#tooltip");
+
+            // Add bars
+            svg.selectAll(".bar")
+                .data(teamPoints)
+                .enter()
+                .append("rect")
+                .attr("class", "bar")
+                .attr("x", d => x(d.team))
+                .attr("y", d => y(d.totalPoints))
+                .attr("width", x.bandwidth())
+                .attr("height", d => height - y(d.totalPoints))
+                .on("mouseover", function(event, d) {
+                    const driverDetails = d.driverPoints
+                        .map(dp => `<strong>${dp.driver}</strong>: ${dp.points} points`)
+                        .join("<br>");
+                    tooltip.style("display", "block")
+                        .html(`<strong>${d.team}</strong><br>${driverDetails}`);
+                    d3.select(this).style("fill", "orange");
+                })
+                .on("mousemove", function(event) {
+                    tooltip.style("left", `${event.pageX + 10}px`)
+                        .style("top", `${event.pageY + 10}px`);
+                })
+                .on("mouseout", function() {
+                    tooltip.style("display", "none");
+                    d3.select(this).style("fill", "#0daa90");
+                });
+
+            // Add labels
+            svg.selectAll(".label")
+                .data(teamPoints)
+                .enter()
+                .append("text")
+                .attr("class", "label")
+                .attr("x", d => x(d.team) + x.bandwidth() / 2)
+                .attr("y", d => y(d.totalPoints) - 5)
+                .text(d => d.totalPoints);
+        }).catch(error => {
+            console.error("Error loading the CSV file:", error);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formula 1 Stacked Area Chart - Top 3 Teams</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.2.8/d3.min.js" type="text/JavaScript"></script>
+    <style>
+      /* Dark Theme Styling */
+      body {
+        font-family: 'Poppins', sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #1c1c1c;
+        color: white;
+      }
+      h1 {
+        text-align: center;
+        margin-bottom: 10px;
+        color: white;
+      }
+      .info {
+        text-align: center;
+        margin-bottom: 30px;
+        line-height: 1.6;
+        color: #ddd;
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 5px;
+        margin-left: 20%;
+        color: #ddd;
+      }
+      .legend-item div {
+        width: 12px;
+        height: 12px;
+        margin-right: 10px;
+        border: 1px solid #333;
+      }
+      svg {
+        font-size: 12px;
+      }
+      .grid path,
+      .grid line {
+        stroke: #444;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Formula 1 2023 Season: Points Distribution</h1>
+    <div class="info">
+      <h3>Stacked Area Chart</h3>
+      <p>This stacked area chart shows the points scored by the top 3 teams—Red Bull Racing, Mercedes, and Ferrari—across all races in the 2023 Formula 1 season.</p>
+      <p>Each colored layer represents a team, with the height of the layer at each race showing the total points scored by that team at the race. The colors are assigned as follows:</p>
+      <div class="legend">
+        <div class="legend-item"><div style="background-color: #05243a;"></div> Red Bull Racing</div>
+        <div class="legend-item"><div style="background-color: #0daa90;"></div> Mercedes</div>
+        <div class="legend-item"><div style="background-color: #d41515;"></div> Ferrari</div>
+      </div>
+    </div>
+    <div id="viz">
+      <svg></svg>
+    </div>
+    <script>
+      d3.csv("../data/Formula1_2023season_raceResults.csv", dataViz);
+
+      function dataViz(data) {
+        const topTeams = ["Red Bull Racing", "Mercedes", "Ferrari"];
+        const filteredData = data.filter(d => topTeams.includes(d.Team));
+
+        const containerWidth = window.innerWidth * 0.8;
+        const containerHeight = window.innerHeight * 0.6;
+
+        const margin = { top: 40, right: 30, bottom: 70, left: 70 };
+        const width = containerWidth - margin.left - margin.right;
+        const height = containerHeight - margin.top - margin.bottom;
+
+        const svg = d3.select("svg")
+          .attr("width", containerWidth)
+          .attr("height", containerHeight);
+
+        const groupedData = d3.nest()
+          .key(d => d.Track)
+          .rollup(tracks => {
+            const teamPoints = {};
+            tracks.forEach(d => {
+              teamPoints[d.Team] = (teamPoints[d.Team] || 0) + +d.Points;
+            });
+            return teamPoints;
+          })
+          .entries(filteredData);
+
+        const stackedData = groupedData.map(d => {
+          const result = { Track: d.key };
+          topTeams.forEach(team => {
+            result[team] = d.value[team] || 0;
+          });
+          return result;
+        });
+
+        const xScale = d3.scalePoint()
+          .domain(stackedData.map(d => d.Track))
+          .range([0, width]);
+
+        const yScale = d3.scaleLinear()
+          .domain([0, d3.max(stackedData, d => d3.sum(topTeams.map(team => d[team])))]).nice()
+          .range([height, 0]);
+
+        const fillScale = d3.scaleOrdinal()
+          .domain(topTeams)
+          .range(["#05243a", "#0daa90", "#d41515"]);
+
+        const stack = d3.stack()
+          .keys(topTeams);
+
+        const area = d3.area()
+          .x(d => xScale(d.data.Track))
+          .y0(d => yScale(d[0]))
+          .y1(d => yScale(d[1]));
+
+        const chart = svg.append("g")
+          .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        chart.selectAll("path")
+          .data(stack(stackedData))
+          .enter().append("path")
+          .attr("d", area)
+          .style("fill", d => fillScale(d.key))
+          .style("opacity", 0.8);
+
+        const xAxis = d3.axisBottom(xScale);
+        const yAxis = d3.axisLeft(yScale);
+
+        chart.append("g")
+          .attr("transform", `translate(0,${height})`)
+          .call(xAxis)
+          .selectAll("text")
+          .style("text-anchor", "end")
+          .attr("transform", "rotate(-45)")
+          .style("fill", "#ddd");
+
+        chart.append("g")
+          .call(yAxis)
+          .selectAll("text")
+          .style("fill", "#ddd");
+
+        chart.append("g")
+          .attr("class", "grid")
+          .call(d3.axisLeft(yScale)
+            .tickSize(-width)
+            .tickFormat("")
+          );
+      }
+    </script>
+  </body>
+</html>

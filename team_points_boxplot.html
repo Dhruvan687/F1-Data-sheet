@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 Starting Grid vs Points Boxplot</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #1c1c1c;
+            color: white;
+        }
+        h2 {
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+        }
+        .tooltip {
+            position: absolute;
+            background-color: #333;
+            color: white;
+            border: 1px solid #444;
+            border-radius: 5px;
+            padding: 10px;
+            font-size: 0.9rem;
+            pointer-events: none;
+            display: none;
+            box-shadow: 0px 4px 10px rgba(255, 255, 255, 0.3);
+        }
+        .instructions {
+            margin-top: 20px;
+            font-size: 1rem;
+            background-color: #333;
+            padding: 15px;
+            border: 1px solid #444;
+            border-radius: 5px;
+            box-shadow: 0px 4px 10px rgba(255, 255, 255, 0.3);
+            color: #ddd;
+        }
+        .box {
+            fill: #d50000;
+            opacity: 0.8;
+        }
+        .median {
+            stroke: white;
+            stroke-width: 2px;
+            opacity: 1;
+        }
+        .whisker {
+            stroke: white;
+            stroke-width: 1px;
+        }
+        .outlier {
+            fill: #ff4500;
+            stroke: none;
+        }
+        .axis text {
+            font-size: 12px;
+            fill: #ddd;
+        }
+        .axis path,
+        .axis line {
+            fill: none;
+            stroke: #555;
+            shape-rendering: crispEdges;
+        }
+        svg {
+            box-shadow: 0px 4px 15px rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>F1 2023: Points Distribution by Starting Grid</h2>
+    <div id="chart"></div>
+    <div id="legend" style="margin-top: 20px; text-align: center;">
+        <span style="color: #d50000; font-weight: bold;">Box (Interquartile Range)</span> | 
+        <span style="color: white; font-weight: bold;">Median</span> | 
+        <span style="color: #ff4500; font-weight: bold;">Outliers</span>
+    </div>
+    <div id="tooltip" class="tooltip"></div>
+    <div class="instructions">
+        <h4>How to Read This Graph:</h4>
+        <ul>
+            <li><strong>Box (Interquartile Range):</strong> The box represents the middle 50% of points scored from each starting grid.</li>
+            <li><strong>Median Line:</strong> A horizontal line inside the box indicates the median (50th percentile) points scored.</li>
+            <li><strong>Whiskers:</strong> Lines extending from the box represent the minimum and maximum values within 1.5x IQR (excluding outliers).</li>
+            <li><strong>Outliers:</strong> Red dots outside the whiskers are outliers — unusually high or low points scored.</li>
+            <li><strong>X-Axis:</strong> Each starting grid position is represented.</li>
+            <li><strong>Y-Axis:</strong> The scale shows the range of points scored from each grid.</li>
+        </ul>
+    </div>
+    <script>
+        d3.csv("../data/Formula1_2023season_raceResults.csv").then(data => {
+            const boxplotData = d3.groups(data, d => d['Starting Grid']).map(([grid, values]) => {
+                const points = values.map(d => +d.Points).sort(d3.ascending);
+                const q1 = d3.quantile(points, 0.25);
+                const median = d3.quantile(points, 0.5);
+                const q3 = d3.quantile(points, 0.75);
+                const iqr = q3 - q1;
+                const min = Math.max(d3.min(points), q1 - 1.5 * iqr);
+                const max = Math.min(d3.max(points), q3 + 1.5 * iqr);
+                const outliers = points.filter(p => p < min || p > max);
+                return { grid, points, q1, median, q3, iqr, min, max, outliers };
+            });
+
+            const margin = { top: 40, right: 30, bottom: 100, left: 60 };
+            const width = 800 - margin.left - margin.right;
+            const height = 500 - margin.top - margin.bottom;
+
+            const svg = d3.select("#chart")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            const xScale = d3.scaleBand()
+                .domain(boxplotData.map(d => d.grid))
+                .range([0, width])
+                .padding(0.4);
+
+            const yScale = d3.scaleLinear()
+                .domain([0, d3.max(boxplotData, d => d.max)])
+                .nice()
+                .range([height, 0]);
+
+            svg.append("g")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(xScale).tickFormat(d => `Grid ${d}`))
+                .selectAll("text")
+                .attr("transform", "rotate(-45)")
+                .style("text-anchor", "end");
+
+            svg.append("g").call(d3.axisLeft(yScale));
+
+            const tooltip = d3.select(".tooltip");
+
+            svg.selectAll(".box")
+                .data(boxplotData)
+                .enter()
+                .append("rect")
+                .attr("class", "box")
+                .attr("x", d => xScale(d.grid))
+                .attr("y", height)
+                .attr("width", xScale.bandwidth())
+                .attr("height", 0)
+                .on("mouseover", function(event, d) {
+                    tooltip.style("display", "block")
+                        .html(`<strong>Starting Grid:</strong> ${d.grid}<br>
+                               <strong>Q1:</strong> ${d.q1}<br>
+                               <strong>Median:</strong> ${d.median}<br>
+                               <strong>Q3:</strong> ${d.q3}`);
+                })
+                .on("mousemove", function(event) {
+                    tooltip.style("left", `${event.pageX + 10}px`)
+                        .style("top", `${event.pageY + 10}px`);
+                })
+                .on("mouseout", function() {
+                    tooltip.style("display", "none");
+                })
+                .transition()
+                .duration(1000)
+                .attr("y", d => yScale(d.q3))
+                .attr("height", d => yScale(d.q1) - yScale(d.q3));
+
+            svg.selectAll(".median")
+                .data(boxplotData)
+                .enter()
+                .append("line")
+                .attr("class", "median")
+                .attr("x1", d => xScale(d.grid) + xScale.bandwidth() / 2)
+                .attr("x2", d => xScale(d.grid) + xScale.bandwidth() / 2)
+                .attr("y1", height)
+                .attr("y2", height)
+                .transition()
+                .delay(1000)
+                .duration(500)
+                .attr("y1", d => yScale(d.median))
+                .attr("y2", d => yScale(d.median));
+        }).catch(error => {
+            console.error("Error loading the CSV file:", error);
+        });
+    </script>
+</body>
+</html>

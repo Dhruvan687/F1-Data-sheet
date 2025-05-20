@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formula 1 Heatmap - Jhanani Ramasamy - 8802556</title>
+
+  <!-- Import Poppins Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- Import D3.js -->
+  <script src="https://d3js.org/d3.v6.min.js"></script>
+
+  <style>
+    /* General Reset and Base Styles */
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #1c1c1c;
+      color: white;
+    }
+
+    /* Centered Content Wrapper */
+    .content-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      text-align: center;
+      max-width: 1400px;
+      margin: auto;
+    }
+
+    /* General Header Styling */
+    h1 {
+      text-align: center;
+      margin: 20px 0;
+      font-size: 26px;
+      color: white;
+    }
+
+    h2 {
+      text-align: center;
+      margin: 10px 0;
+      font-size: 18px;
+      color: #ddd;
+    }
+
+    /* Paragraph */
+    p {
+      margin: 10px auto;
+      font-size: 16px;
+      line-height: 1.5;
+      max-width: 900px;
+      color: #aaa;
+    }
+
+    /* Heatmap Section */
+    #heatmap {
+      margin: 30px auto;
+    }
+
+    /* Tiles & Animation */
+    .tile {
+      rx: 5;
+      ry: 5;
+      stroke: #1c1c1c;
+      stroke-width: 1px;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    .tile:hover {
+      transform: scale(1.1);
+      opacity: 0.9;
+    }
+
+    /* Tooltip Styling */
+    .tooltip {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.9);
+      color: #333;
+      padding: 8px;
+      border-radius: 4px;
+      pointer-events: none;
+      display: none;
+      font-size: 12px;
+      box-shadow: 0px 4px 15px rgba(255, 255, 255, 0.3);
+    }
+
+    /* Legend Styling */
+    .legend-container {
+      display: flex;
+      justify-content: center;
+      margin: 20px 0;
+      font-size: 14px;
+      gap: 10px;
+    }
+
+    .legend-box {
+      width: 12px;
+      height: 12px;
+      display: inline-block;
+      margin-right: 5px;
+    }
+
+    /* Axes & Chart Styling */
+    .axis text {
+      font-size: 12px;
+      fill: #ddd;
+    }
+
+    .axis path,
+    .axis line {
+      stroke: #444;
+    }
+
+    /* General Container for Charts */
+    #radar-chart,
+    #heatmap {
+      margin: auto;
+      width: 90%;
+      max-width: 700px;
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="content-container">
+    <h1>Formula 1 Team Performance Heatmap</h1>
+    <h2>Analyzing Team Performance Across Grand Prix Tracks</h2>
+    <div id="heatmap"></div>
+    <p>
+      This heatmap provides insights into the performance trends of Formula 1 teams across various Grand Prix tracks. Each cell represents
+      a combination of a Formula 1 team and a specific track, and the color intensity of the cells indicates the points scored by a
+      particular team at each respective location. Darker colors correspond to higher points, highlighting team dominance on
+      particular tracks.
+    </p>
+
+    <p>
+      The visualization showcases patterns of team consistency and strategic performance across the Formula 1 racing calendar.
+      Analysts and fans can use this analysis to discern which teams are performing well on specific circuits.
+    </p>
+    <p>
+      Jhanani Ramasamy _ 8802556
+    </p>
+  </div>
+
+  <div class="tooltip"></div>
+
+  <script>
+    const margin = { top: 50, right: 200, bottom: 100, left: 100 };
+    const width = 900 - margin.left - margin.right;
+    const height = 500 - margin.top - margin.bottom;
+
+    const svg = d3.select("#heatmap")
+      .append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const tooltip = d3.select(".tooltip");
+
+    const teams = ["Mercedes", "Red Bull", "Ferrari", "McLaren", "Alpine", "Aston Martin", "Williams", "AlphaTauri", "Haas", "Alfa Romeo"];
+    const tracks = ["Australia", "Bahrain", "Canada", "Spain", "Monaco", "Austria", "UK", "Hungary", "Italy", "Singapore"];
+
+    const simulatedData = [];
+    for (let team of teams) {
+      for (let track of tracks) {
+        const points = Math.floor(Math.random() * 30);
+        simulatedData.push({ team, track, points });
+      }
+    }
+
+    const teamScale = d3.scaleBand().domain(teams).range([0, width]).padding(0.2);
+    const trackScale = d3.scaleBand().domain(tracks).range([0, height]).padding(0.2);
+
+    const colorScale = d3.scaleSequential(d3.interpolateOranges).domain([0, 30]);
+
+    svg.selectAll(".tile")
+      .data(simulatedData)
+      .enter()
+      .append("rect")
+      .attr("class", "tile")
+      .attr("x", d => teamScale(d.team))
+      .attr("y", d => trackScale(d.track))
+      .attr("width", teamScale.bandwidth())
+      .attr("height", trackScale.bandwidth())
+      .style("fill", d => colorScale(d.points))
+      .on("mouseover", (event, d) => {
+        tooltip
+          .style("display", "block")
+          .style("left", `${event.pageX + 10}px`)
+          .style("top", `${event.pageY + 10}px`)
+          .html(`<strong>Team:</strong> ${d.team}<br><strong>Track:</strong> ${d.track}<br><strong>Points:</strong> ${d.points}`);
+      })
+      .on("mousemove", (event) => {
+        tooltip
+          .style("left", `${event.pageX + 10}px`)
+          .style("top", `${event.pageY + 10}px`);
+      })
+      .on("mouseout", () => {
+        tooltip.style("display", "none");
+      });
+
+    svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", `translate(0,${height})`)
+      .call(d3.axisBottom(teamScale))
+      .selectAll("text")
+      .style("text-anchor", "end")
+      .attr("transform", "rotate(-45)");
+
+    svg.append("g")
+      .attr("class", "y axis")
+      .call(d3.axisLeft(trackScale));
+
+    const legend = svg.append("g")
+      .attr("class", "legend")
+      .attr("transform", `translate(${width + 20}, 0)`);
+
+    const legendDomain = d3.range(0, 31, 5);
+    legendDomain.forEach((d, i) => {
+      legend.append("rect")
+        .attr("x", 0)
+        .attr("y", i * 30)
+        .attr("width", 20)
+        .attr("height", 20)
+        .style("fill", colorScale(d));
+
+      legend.append("text")
+        .attr("x", 30)
+        .attr("y", i * 30 + 15)
+        .text(`${d}-${d + 4}`);
+    });
+  </script>
+</body>
+
+</html>

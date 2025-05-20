@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 2023 Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #1c1c1c;
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            overflow-x: hidden;
+        }
+        .logo {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            height: 80px;
+        }
+        .f1-banner {
+            background-image: url('https://your-banner-image-url.jpg');
+            background-size: cover;
+            background-position: center;
+            padding: 100px 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            animation: slideIn 1.5s ease-out;
+            position: relative;
+            color: white;
+        }
+        .f1-banner::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(29, 29, 29, 0.6);
+        }
+        .f1-banner h1, .f1-banner p {
+            position: relative;
+            z-index: 1;
+        }
+        .f1-banner h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            animation: fadeInDown 1s ease-out;
+        }
+        .f1-banner p {
+            font-size: 1.5rem;
+            animation: fadeInUp 1s ease-out;
+        }
+        .description {
+            text-align: center;
+            margin: 40px auto;
+            max-width: 800px;
+            font-size: 1.2rem;
+            animation: fadeIn 2s ease-in-out;
+        }
+        .card {
+            background-color: #2a2a2a;
+            border: none;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 30px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .card img {
+            height: 200px;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        .card:hover img {
+            transform: scale(1.1);
+        }
+        .card-body {
+            padding: 20px;
+            text-align: center;
+        }
+        .card-title {
+            font-weight: bold;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+        .card-text {
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 8px 20px rgba(255, 255, 255, 0.1);
+        }
+        .btn-explore {
+            background-color: #d50000;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 50px;
+            transition: background-color 0.3s;
+        }
+        .btn-explore:hover {
+            background-color: #bf0000;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        /* Footer Styling */
+        .footer {
+            background-color: #111;
+            color: #777;
+            padding: 20px 0;
+            text-align: center;
+            margin-top: 40px;
+        }
+        .footer a {
+            color: #777;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        .footer a:hover {
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Logo -->
+    <img src="data/F1_02_C_BRAND_IDENTITY_Logos_portfolio4-removebg-preview.png" alt="F1 Logo" class="logo">
+
+    <!-- Banner -->
+    <div class="f1-banner">
+        <h1>F1 2023 Dashboard</h1>
+        <p>Explore insights and data visualizations from the 2023 Formula 1 season.</p>
+    </div>
+
+    <div class="description">
+        <p>Welcome to the F1 2023 Dashboard! This page features a collection of interactive charts 
+        designed to provide insights into the thrilling 2023 Formula 1 season. From analyzing team 
+        performances and driver standings to uncovering the impact of weather and pit stops, 
+        each chart offers a unique perspective into the world of F1.</p>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <!-- Card 1: Team Points Bar Chart -->
+            <div class="col-md-4">
+                <div class="card">
+                    <a href="team_points_bar_chart.html" style="text-decoration: none; color: inherit;">
+                        <img src="https://res.cloudinary.com/dmukukwp6/image/upload/v1710055416/posthog.com/contents/images/docs/user-guides/trends/time-bar-chart-dark-mode.png" alt="Bar Chart" class="card-img-top">
+                        <div class="card-body">
+                            <h5 class="card-title">Team Points Bar Chart</h5>
+                            <p class="card-text">Visualize total points scored by teams in the 2023 season.</p>
+                            <button class="btn-explore">Explore Chart</button>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Card 2: Points Distribution Boxplot -->
+            <div class="col-md-4">
+                <div class="card">
+                    <a href="team_points_boxplot.html" style="text-decoration: none; color: inherit;">
+                        <img src="https://static.anychart.com/images/gallery/v8/box-charts-box-chart-darkearth.png" alt="Boxplot" class="card-img-top">
+                        <div class="card-body">
+                            <h5 class="card-title">Points Distribution Boxplot</h5>
+                            <p class="card-text">Analyze how points are distributed across teams.</p>
+                            <button class="btn-explore">Explore Chart</button>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Card 3: Driver Points Pie Chart -->
+            <div class="col-md-4">
+                <div class="card">
+                    <a href="driver_points_pie_chart.html" style="text-decoration: none; color: inherit;">
+                        <img src="https://global.discourse-cdn.com/monday/optimized/2X/0/0bc752c1410f4b58ede866ebddbe535dd18dc881_2_690x384.png" alt="Pie Chart" class="card-img-top">
+                        <div class="card-body">
+                            <h5 class="card-title">Driver Points Pie Chart</h5>
+                            <p class="card-text">Compare the total points scored by each driver.</p>
+                            <button class="btn-explore">Explore Chart</button>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Card 4: Points Heatmap -->
+            <div class="col-md-4">
+                <div class="card">
+                    <a href="heatmap.html" style="text-decoration: none; color: inherit;">
+                        <img src="https://user-images.githubusercontent.com/549577/115403981-e56c4880-a1ba-11eb-821f-3ffeb09b268d.png" alt="Heatmap" class="card-img-top">
+                        <div class="card-body">
+                            <h5 class="card-title">Points Heatmap</h5>
+                            <p class="card-text">Visualize team performance across tracks in 2023.</p>
+                            <button class="btn-explore">Explore Chart</button>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Card 5: Radar Chart -->
+            <div class="col-md-4">
+                <div class="card">
+                    <a href="radar.html" style="text-decoration: none; color: inherit;">
+                        <img src="https://miro.medium.com/v2/resize:fit:500/1*d6Y7JhzRwubXovRuujuu5Q.png" alt="Radar Chart" class="card-img-top">
+                        <div class="card-body">
+                            <h5 class="card-title">Radar Chart</h5>
+                            <p class="card-text">Analyze team performance trends across key metrics.</p>
+                            <button class="btn-explore">Explore Chart</button>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Card 6: Sankey Diagram -->
+            <div class="col-md-4">
+                <div class="card">
+                    <a href="sankey_diagram.html" style="text-decoration: none; color: inherit;">
+                        <img src="https://cdn.dribbble.com/userupload/3814771/file/original-72270391a1221a10f5829da9fa4960e8.png" alt="Sankey Diagram" class="card-img-top">
+                        <div class="card-body">
+                            <h5 class="card-title">Sankey Diagram</h5>
+                            <p class="card-text">Explore the flow of points across teams and tracks.</p>
+                            <button class="btn-explore">Explore Chart</button>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Card 7: Stacked Area Chart -->
+            <div class="col-md-4">
+                <div class="card">
+                    <a href="stacked_graph.html" style="text-decoration: none; color: inherit;">
+                        <img src="https://media.geeksforgeeks.org/wp-content/uploads/20221210215602/gfg100_1.png" alt="Stacked Area Chart" class="card-img-top">
+                        <div class="card-body">
+                            <h5 class="card-title">Stacked Area Chart</h5>
+                            <p class="card-text">Compare cumulative points scored by teams over races.</p>
+                            <button class="btn-explore">Explore Chart</button>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>&copy; 2023 F1 Dashboard. All rights reserved.</p>
+        <p>
+            <a href="#">About</a> | 
+            <a href="#">Contact</a> | 
+            <a href="#">Privacy Policy</a>
+        </p>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Optional: Include any additional JS for animations -->
+</body>
+</html>

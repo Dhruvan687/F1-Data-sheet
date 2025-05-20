@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formula 1 Sankey Diagram - Red Bull Racing</title>
+  <script src="https://d3js.org/d3.v6.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-sankey/0.12.3/d3-sankey.min.js"></script>
+  <style>
+    /* General Reset and Theme Styling */
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #1c1c1c;
+      color: white;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 26px;
+      margin-bottom: 20px;
+      color: white;
+    }
+
+    .info {
+      text-align: center;
+      margin: 20px auto;
+      line-height: 1.6;
+      max-width: 800px;
+      color: #ddd;
+    }
+
+    #sankey-diagram {
+      margin: auto;
+      width: 90%;
+      max-width: 1200px;
+      height: 600px;
+    }
+
+    .node rect {
+      fill-opacity: 0.8;
+      shape-rendering: crispEdges;
+      stroke: #333;
+    }
+
+    .node text {
+      font-size: 12px;
+      fill: #ddd;
+      text-shadow: 0 1px 0 #000;
+    }
+
+    .link {
+      fill: none;
+      stroke-opacity: 0.4;
+      transition: stroke-opacity 0.3s ease;
+    }
+
+    .link:hover {
+      stroke-opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <h1>Formula 1 2023 Season - Red Bull Racing Points Flow</h1>
+  <div class="info">
+    <h3>Sankey Diagram</h3>
+    <p>
+      The thickness of the links in the Sankey diagram represents the number of points scored. 
+      Wider links indicate higher points, while thinner links represent lower points scored by the driver or on the track.
+    </p>
+    <p>
+      The color gradient transitions from cool blue to purple for the points distribution, visually showcasing the flow of data.
+    </p>
+  </div>
+  <div id="sankey-diagram"></div>
+
+  <script>
+    const containerWidth = window.innerWidth * 0.9;
+    const containerHeight = 600;
+
+    const margin = { top: 40, right: 30, bottom: 30, left: 30 };
+    const width = containerWidth - margin.left - margin.right;
+    const height = containerHeight - margin.top - margin.bottom;
+
+    const svg = d3.select("#sankey-diagram")
+      .append("svg")
+      .attr("width", containerWidth)
+      .attr("height", containerHeight);
+
+    d3.csv("../data/Formula1_2023season_raceResults.csv").then((data) => {
+      const filteredData = data.filter(d => d.Team === "Red Bull Racing");
+      const team = ["Red Bull Racing"];
+      const drivers = Array.from(new Set(filteredData.map(d => d.Driver)));
+      const tracks = Array.from(new Set(filteredData.map(d => d.Track)));
+
+      const nodes = [
+        ...team.map(t => ({ name: t })),
+        ...drivers.map(d => ({ name: d })),
+        ...tracks.map(t => ({ name: t }))
+      ];
+
+      const links = [];
+      filteredData.forEach(d => {
+        links.push({
+          source: nodes.findIndex(n => n.name === d.Team),
+          target: nodes.findIndex(n => n.name === d.Driver),
+          value: +d.Points
+        });
+        links.push({
+          source: nodes.findIndex(n => n.name === d.Driver),
+          target: nodes.findIndex(n => n.name === d.Track),
+          value: +d.Points
+        });
+      });
+
+      const sankey = d3.sankey()
+        .nodeWidth(20)
+        .nodePadding(10)
+        .extent([[margin.left, margin.top], [width - margin.right, height - margin.bottom]]);
+
+      const { nodes: sankeyNodes, links: sankeyLinks } = sankey({
+        nodes: nodes.map(d => Object.assign({}, d)),
+        links: links.map(d => Object.assign({}, d))
+      });
+
+      svg.append("g")
+        .selectAll("path")
+        .data(sankeyLinks)
+        .join("path")
+        .attr("d", d3.sankeyLinkHorizontal())
+        .attr("class", "link")
+        .attr("stroke", d => d3.interpolateCool(d.value / 50))
+        .attr("stroke-width", d => Math.max(1, d.width));
+
+      const node = svg.append("g")
+        .selectAll("g")
+        .data(sankeyNodes)
+        .join("g")
+        .attr("class", "node");
+
+      node.append("rect")
+        .attr("x", d => d.x0)
+        .attr("y", d => d.y0)
+        .attr("height", d => d.y1 - d.y0)
+        .attr("width", d => d.x1 - d.x0)
+        .attr("fill", (d, i) => d3.schemeCategory10[i % 10])
+        .append("title")
+        .text(d => `${d.name}\n${d.value}`);
+
+      node.append("text")
+        .attr("x", d => d.x0 - 6)
+        .attr("y", d => (d.y1 + d.y0) / 2)
+        .attr("dy", "0.35em")
+        .attr("text-anchor", "end")
+        .text(d => d.name)
+        .filter(d => d.x0 < width / 2)
+        .attr("x", d => d.x1 + 6)
+        .attr("text-anchor", "start");
+    });
+  </script>
+</body>
+</html>
